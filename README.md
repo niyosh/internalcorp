@@ -8,18 +8,18 @@ This tool combines fast port scanning, intelligent web enumeration, URL filterin
 
 ## 🚀 Features
 
-- 🔎 Full TCP port scan using Nmap
-- 📡 UDP top-ports service detection
-- 🌐 Automatic web service discovery
-- 🕷️ Web crawling using Katana
-- 📁 Directory brute-forcing using Dirsearch
-- 🧠 Smart URL filtering engine (dedup + noise reduction)
-- 🎯 High-value endpoint prioritization
-- ⚡ Fast vulnerability scanning using Nuclei
-- 🧵 Multi-target parallel execution
-- 🔁 Resume support for long scans
-- 🎨 Colored CLI logging output
-- 📂 Structured per-target result storage
+🔎 Full TCP port scan using Nmap
+📡 UDP top-ports service detection
+🌐 Automatic web service discovery
+🕷️ Web crawling using Katana
+📁 Directory brute-forcing using Dirsearch
+🧠 Smart URL filtering engine (dedup + noise reduction)
+🎯 High-value endpoint prioritization
+⚡ Fast vulnerability scanning using Nuclei
+🧵 Multi-target parallel execution
+🔁 Resume support for long scans
+🎨 Colored CLI logging output
+📂 Structured per-target result storage
 
 ---
 
