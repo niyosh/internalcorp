@@ -1,49 +1,93 @@
-# Internal Web Reconnaissance and Vulnerability Scanner
+# ⚡ Internal Recon Automation Tool
 
-This is a professional, lightweight, high-performance Python3 script designed for internal penetration testing automation on Kali Linux.
+A lightweight, high-performance internal penetration testing automation tool designed to discover open ports and its services and scan web attack surfaces across internal network targets.
 
-## Features
+This tool combines fast port scanning, intelligent web enumeration, URL filtering, and vulnerability scanning into a simple automated workflow.
 
-- TCP and UDP port scanning using Nmap
-- Web service detection and HTTP probing with httpx
-- Web directory enumeration using Katana and Dirsearch in parallel
-- URL filtering and parameter extraction
-- Optional parameter URL verification
-- Vulnerability scanning with Nuclei including severity filtering, concurrency, and rate limiting
-- Resume capability and concurrency support
-- Colored terminal output and progress messages
-- Modular, production-style code structure
+---
 
-## Requirements
+## 🚀 Features
 
-- Kali Linux with installed tools: nmap, httpx, katana, dirsearch, nuclei
-- Python 3
+- 🔎 Full TCP port scan using Nmap
+- 📡 UDP top-ports service detection
+- 🌐 Automatic web service discovery
+- 🕷️ Web crawling using Katana
+- 📁 Directory brute-forcing using Dirsearch
+- 🧠 Smart URL filtering engine (dedup + noise reduction)
+- 🎯 High-value endpoint prioritization
+- ⚡ Fast vulnerability scanning using Nuclei
+- 🧵 Multi-target parallel execution
+- 🔁 Resume support for long scans
+- 🎨 Colored CLI logging output
+- 📂 Structured per-target result storage
 
-## Usage
+---
 
+## 🧠 Workflow
+Nmap TCP Scan
+↓
+Nmap UDP Scan
+↓
+Web Port Detection
+↓
+Base URL Generation
+↓
+Katana Crawling + Dirsearch Brute (Parallel)
+↓
+Smart URL Filtering
+↓
+Nuclei Vulnerability Scan
+
+---
+
+## 📦 Requirements
+Install required tools:
 ```bash
-python3 internalcorp.py 10.10.10.5
-python3 internalcorp.py example.local
-python3 internalcorp.py -l ips.txt
-python3 internalcorp.py -l ips.txt --resume
-python3 internalcorp.py example.local --verify-params
+sudo apt install nmap
+go install github.com/projectdiscovery/katana/cmd/katana@latest
+go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+pip install dirsearch
+pip install colorama
 ```
 
-## Command Line Options
+---
 
-- `targets`: Single IP or domain targets
-- `-l, --list`: File containing list of targets
-- `--resume`: Resume from previous scan results
-- `--verify-params`: Verify parameter URLs are alive before nuclei scan
-- `--severity`: Nuclei severity filter (default: low,medium,high,critical)
-- `--concurrency`: Nuclei concurrency (default: 50)
-- `--rate-limit`: Nuclei rate limit (default: 150)
+## ⚙️ Usage
+```bash
+python3 scanner.py -h #help
+python3 scanner.py 10.10.10.5 #Scan Single Target
+python3 scanner.py -l targets.txt #Scan Multiple Targets
+python3 scanner.py -l targets.txt -t 10 #Parallel Execution
+python3 scanner.py -l targets.txt --resume #Resume Interrupted Scan
+```
 
-## Output
+---
 
-All scan results are saved under `scan_results/<target>/` directories.
+## 🎯 URL Filtering Logic
 
-## License
+The tool intelligently keeps:
+* HTTP status codes: 200, 302, 401, 403
+* Parameterized URLs
+* Admin / login / management endpoints
+* Dynamic application paths
 
-This tool is for authorized penetration testing only.
+It removes:
+* Static resources (CSS, JS, images, fonts)
+* Deep crawl noise
+* Duplicate URLs
 
+---
+
+## ⚡ Performance Design
+
+* Multi-threaded target processing
+* Timeout protection for long-running tools
+* Streaming file processing (memory efficient)
+* Aggressive but safe scanning defaults
+
+---
+
+## ⚠️ Disclaimer
+
+This tool is intended for authorized internal penetration testing and security assessments only.
+Use responsibly.
