@@ -13,18 +13,13 @@ import shutil
 from colorama import Fore, init
 init(autoreset=True)
 
-REQUIRED_TOOLS = ["nmap","katana","dirsearch","nuclei","gowitness"]
+REQUIRED_TOOLS = ["nmap","katana","nuclei"]
 
 WEB_PORT_HINTS = {80,443,8080,8000,8443,3000,5000,7001,9000}
 
-STATIC_EXT = (
-    ".css",".js",".png",".jpg",".jpeg",".gif",".svg",".ico",".woff",
-    ".webp",".mp4",".pdf",".zip",".woff2",".ttf",".eot"
-)
+STATIC_EXT = (".css",".js",".png",".jpg",".jpeg",".gif",".svg",".ico",".woff",".webp",".mp4",".pdf",".zip")
 
 LOCK = threading.Lock()
-
-# -------------------------------------------------
 
 def log(msg,color=Fore.CYAN):
     with LOCK:
@@ -32,40 +27,29 @@ def log(msg,color=Fore.CYAN):
 
 # -------------------------------------------------
 
-def check_dependencies():
-    missing=[]
-    for t in REQUIRED_TOOLS:
-        if shutil.which(t) is None:
-            missing.append(t)
-    if missing:
-        log(f"[!] Missing tools: {','.join(missing)}",Fore.RED)
-        sys.exit(1)
-
-# -------------------------------------------------
-
 def run_cmd(cmd,timeout=None):
+
+    log(f"[EXEC] {cmd}",Fore.YELLOW)
+
     try:
-        subprocess.run(cmd,shell=True,timeout=timeout,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
+        return subprocess.run(cmd,shell=True,timeout=timeout).returncode
     except subprocess.TimeoutExpired:
-        log(f"[!] Timeout: {cmd}",Fore.RED)
+        log("[TIMEOUT]",Fore.RED)
+        return -1
 
 # -------------------------------------------------
 
-def nmap_scan(target, tdir, resume):
+def nmap_scan(target,tdir,resume):
 
-    tcp_prefix=f"{tdir}/nmap_tcp"
-    udp_prefix=f"{tdir}/nmap_udp"
+    tcp_xml=f"{tdir}/nmap_tcp.xml"
+    udp_xml=f"{tdir}/nmap_udp.xml"
 
-    if not (resume and os.path.exists(tcp_prefix+".xml")):
-        log(f"[+] TCP scan {target}")
-        cmd=f"nmap -Pn -p- -sS -sV -sC --open -T4 --min-rate 500 --max-retries 1 -oA {tcp_prefix} {target}"
+    if not (resume and os.path.exists(tcp_xml)):
+        cmd=f"nmap -Pn -p- -sS -sV -sC --open -T4 --min-rate 500 --max-retries 1 -oA {tdir}/nmap_tcp {target}"
         run_cmd(cmd,3600)
 
-    if not (resume and os.path.exists(udp_prefix+".xml")):
-        log(f"[+] UDP scan {target}")
-        cmd=f"nmap -Pn -sU --top-ports 200 -T4 --max-retries 1 -oA {udp_prefix} {target}"
+    if not (resume and os.path.exists(udp_xml)):
+        cmd=f"nmap -Pn -sU -sV -sC --open --top-ports 200 -T4 --max-retries 1 -oA {tdir}/nmap_udp {target}"
         run_cmd(cmd,3600)
 
 # -------------------------------------------------
@@ -81,6 +65,7 @@ def parse_web_ports(xml_file):
     root=tree.getroot()
 
     for port in root.findall(".//port"):
+
         state=port.find("state")
         svc=port.find("service")
 
@@ -116,99 +101,130 @@ def web_enum(url_file,tdir):
     katana_out=f"{tdir}/katana.txt"
     dir_out=f"{tdir}/dirsearch.txt"
 
-    cmd1=f"katana -list {url_file} -jc -kf -o {katana_out}"
-    cmd2=f"dirsearch --url-list {url_file} -e php,asp,aspx,jsp,html,json -t 40 -o {dir_out}"
+    if os.path.getsize(url_file)==0:
+        log("[!] No web urls",Fore.RED)
+        return katana_out,dir_out
+
+    cmd1=f"katana -list {url_file} -jc -o {katana_out}"
+    cmd2=f"dirsearch -l {url_file} -o {dir_out}"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-        ex.submit(run_cmd,cmd1,1800)
-        ex.submit(run_cmd,cmd2,1800)
+        futures=[
+            ex.submit(run_cmd,cmd1,1800),
+            ex.submit(run_cmd,cmd2,1800)
+        ]
+        concurrent.futures.wait(futures)
 
     return katana_out,dir_out
 
 # -------------------------------------------------
 
-def merge_filter(files,outfile):
+def merge_filter(files, outfile):
 
-    seen=set()
+    GOOD_CODES = {"200","302","401","403"}
 
-    with open(outfile,"w") as out:
+    KEYWORDS = (
+        "admin","login","console","dashboard","manager",
+        "phpmyadmin","api","test","dev","config","secure"
+    )
+
+    DYNAMIC_EXT = (
+        ".php",".jsp",".asp",".aspx",".do",".action",".json"
+    )
+
+    seen = set()
+
+    with open(outfile, "w") as out:
 
         for f in files:
+
             if not os.path.exists(f):
                 continue
 
             with open(f) as fh:
+
                 for line in fh:
-                    u=line.strip()
-                    if not u:
+
+                    line = line.strip()
+                    if not line:
                         continue
 
-                    h=hashlib.sha1(u.encode()).hexdigest()
+                    # -------- DIRSEARCH FORMAT --------
+                    if line[0].isdigit():
+
+                        parts = line.split()
+                        if len(parts) < 3:
+                            continue
+
+                        status = parts[0]
+                        if status not in GOOD_CODES:
+                            continue
+
+                        url = parts[-1]
+
+                    # -------- KATANA FORMAT --------
+                    else:
+                        url = line
+
+                        # aggressive katana filtering
+                        if "?" not in url \
+                           and not any(k in url.lower() for k in KEYWORDS) \
+                           and not url.lower().endswith(DYNAMIC_EXT):
+                            continue
+
+                        # skip deep crawling noise
+                        if url.count("/") > 6:
+                            continue
+
+                    # -------- STATIC FILTER --------
+                    if url.lower().endswith(STATIC_EXT):
+                        continue
+
+                    # -------- DEDUP --------
+                    h = hashlib.sha1(url.encode()).hexdigest()
                     if h in seen:
                         continue
 
                     seen.add(h)
-
-                    if u.lower().endswith(STATIC_EXT):
-                        continue
-
-                    out.write(u+"\n")
+                    out.write(url + "\n")
 
 # -------------------------------------------------
 
-def extract_params(infile,outfile):
+def nuclei_scan(url_file,tdir):
 
-    with open(infile) as fi, open(outfile,"w") as fo:
-        for line in fi:
-            u=line.strip()
-            if "?" in u and "=" in u:
-                fo.write(u+"\n")
-
-# -------------------------------------------------
-
-def nuclei_scan(param_file,tdir):
-
-    if not os.path.exists(param_file):
+    if os.path.getsize(url_file)==0:
+        log("[!] No URLs for nuclei",Fore.RED)
         return
 
-    out=f"{tdir}/nuclei.json"
-    cmd=f"nuclei -l {param_file} -severity low,medium,high,critical -rate-limit 150 -c 50 -json -o {out}"
+    cmd=f"nuclei -l {url_file} -severity low,medium,high,critical -rate-limit 150 -c 50 -o {tdir}/nuclei.txt"
     run_cmd(cmd,3600)
-
-# -------------------------------------------------
-
-def screenshot(url_file,tdir):
-    cmd=f"gowitness file -f {url_file} -P {tdir}/shots"
-    run_cmd(cmd,1800)
 
 # -------------------------------------------------
 
 def process_target(target,resume):
 
-    tdir=f"results/{target.replace(':','_')}"
+    log(f"===== {target} =====",Fore.MAGENTA)
+
+    tdir=f"results/{target}"
     os.makedirs(tdir,exist_ok=True)
 
     nmap_scan(target,tdir,resume)
 
-    xml=f"{tdir}/nmap_tcp.xml"
-    ports=parse_web_ports(xml)
+    ports=parse_web_ports(f"{tdir}/nmap_tcp.xml")
 
-    log(f"[WEB] {target} -> {ports}",Fore.BLUE)
+    if not ports:
+        log("[!] No web ports",Fore.RED)
+        return
 
     url_file=f"{tdir}/base_urls.txt"
     build_base_urls(target,ports,url_file)
-
-    screenshot(url_file,tdir)
 
     katana,dirsearch=web_enum(url_file,tdir)
 
     filtered=f"{tdir}/filtered_urls.txt"
     merge_filter([katana,dirsearch],filtered)
 
-    params=f"{tdir}/params.txt"
-    extract_params(filtered,params)
-
-    nuclei_scan(params,tdir)
+    nuclei_scan(filtered,tdir)
 
 # -------------------------------------------------
 
@@ -221,8 +237,6 @@ def main():
     parser.add_argument("-t","--threads",type=int,default=5)
 
     args=parser.parse_args()
-
-    check_dependencies()
 
     targets=[]
 
@@ -242,8 +256,6 @@ def main():
         ex.map(lambda t: process_target(t,args.resume),targets)
 
     log("[DONE]",Fore.GREEN)
-
-# -------------------------------------------------
 
 if __name__=="__main__":
     main()
