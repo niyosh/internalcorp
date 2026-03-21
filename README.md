@@ -22,11 +22,11 @@ This is a professional, lightweight, high-performance Python3 script designed fo
 ## Usage
 
 ```bash
-python3 scanner.py 10.10.10.5
-python3 scanner.py example.local
-python3 scanner.py -l ips.txt
-python3 scanner.py -l ips.txt --resume
-python3 scanner.py example.local --verify-params
+python3 internalcorp.py 10.10.10.5
+python3 internalcorp.py example.local
+python3 internalcorp.py -l ips.txt
+python3 internalcorp.py -l ips.txt --resume
+python3 internalcorp.py example.local --verify-params
 ```
 
 ## Command Line Options
