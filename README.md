@@ -23,23 +23,6 @@ This tool combines fast port scanning, intelligent web enumeration, URL filterin
 
 ---
 
-## 🧠 Workflow
-Nmap TCP Scan
-↓
-Nmap UDP Scan
-↓
-Web Port Detection
-↓
-Base URL Generation
-↓
-Katana Crawling + Dirsearch Brute (Parallel)
-↓
-Smart URL Filtering
-↓
-Nuclei Vulnerability Scan
-
----
-
 ## 📦 Requirements
 Install required tools:
 ```bash
