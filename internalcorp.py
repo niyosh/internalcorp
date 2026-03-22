@@ -196,7 +196,7 @@ def nuclei_scan(url_file,tdir):
         log("[!] No URLs for nuclei",Fore.RED)
         return
 
-    cmd=f"nuclei -l {url_file} -severity low,medium,high,critical -rate-limit 150 -c 50 -o {tdir}/nuclei.txt"
+    cmd=f"nuclei -l {url_file} -severity info,low,medium,high,critical -c 50 -o {tdir}/nuclei.txt"
     run_cmd(cmd,172800)
 
 # -------------------------------------------------
