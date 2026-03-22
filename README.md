@@ -37,11 +37,11 @@ pip install colorama
 
 ## ⚙️ Usage
 ```bash
-python3 scanner.py -h #help
-python3 scanner.py 10.10.10.5 #Scan Single Target
-python3 scanner.py -l targets.txt #Scan Multiple Targets
-python3 scanner.py -l targets.txt -t 10 #Parallel Execution
-python3 scanner.py -l targets.txt --resume #Resume Interrupted Scan
+python3 enum.py -h #help
+python3 enum.py 10.10.10.5 #Scan Single Target
+python3 enum.py -l targets.txt #Scan Multiple Targets
+python3 enum.py -l targets.txt -t 10 #Parallel Execution
+python3 enum.py -l targets.txt --resume #Resume Interrupted Scan
 ```
 
 ---
