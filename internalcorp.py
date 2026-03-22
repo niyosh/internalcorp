@@ -46,11 +46,11 @@ def nmap_scan(target,tdir,resume):
 
     if not (resume and os.path.exists(tcp_xml)):
         cmd=f"nmap -Pn -p- -sS -sV -sC --open -T4 --min-rate 500 --max-retries 1 -oA {tdir}/nmap_tcp {target}"
-        run_cmd(cmd,3600)
+        run_cmd(cmd,172800)
 
     if not (resume and os.path.exists(udp_xml)):
         cmd=f"nmap -Pn -sU -sV -sC --open --top-ports 200 -T4 --max-retries 1 -oA {tdir}/nmap_udp {target}"
-        run_cmd(cmd,3600)
+        run_cmd(cmd,86400)
 
 # -------------------------------------------------
 
@@ -110,8 +110,8 @@ def web_enum(url_file,tdir):
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         futures=[
-            ex.submit(run_cmd,cmd1,1800),
-            ex.submit(run_cmd,cmd2,1800)
+            ex.submit(run_cmd,cmd1,172800),
+            ex.submit(run_cmd,cmd2,172800)
         ]
         concurrent.futures.wait(futures)
 
@@ -197,7 +197,7 @@ def nuclei_scan(url_file,tdir):
         return
 
     cmd=f"nuclei -l {url_file} -severity low,medium,high,critical -rate-limit 150 -c 50 -o {tdir}/nuclei.txt"
-    run_cmd(cmd,3600)
+    run_cmd(cmd,172800)
 
 # -------------------------------------------------
 
