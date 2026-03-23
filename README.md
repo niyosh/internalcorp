@@ -1,4 +1,4 @@
-# ⚡ Internal Recon & Automated Pentest Reporting
+# ⚡ Internal Attack Surface Mapping & Pentest Automation
 
 ![Python](https://img.shields.io/badge/python-3.x-blue)
 ![Nmap](https://img.shields.io/badge/scan-nmap-red)
@@ -41,17 +41,16 @@ Targets
    │         │
    │         └──► Infra Intelligence Engine
    │                     │
-   │                     └──► infra_report.html
+   │                     └──► nmap_report.html
    │
-   ├──► Web Discovery (Katana + Dirsearch)
-   │         │
-   │         └──► URL Filtering Engine
-   │                     │
-   │                     └──► Nuclei Scan
-   │                                │
-   │                                └──► web_report.html
-   │
-   └──► enum.py Orchestration
+   └──► Web Discovery (Katana + Dirsearch)
+             │
+             └──► URL Filtering Engine
+                         │
+                         └──► Nuclei Scan
+                                    │
+                                    └──► web_report.html
+   
 ```
 
 ---
@@ -67,7 +66,7 @@ Targets
 * Legacy protocols
 * Remote access exposure
 
-**File:** `infra_report.html`
+**File:** `nmap_report.html`
 
 ---
 
@@ -87,10 +86,8 @@ Targets
 
 ```bash
 sudo apt install nmap
-
 go install github.com/projectdiscovery/katana/cmd/katana@latest
 go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-
 pip install dirsearch
 pip install colorama
 ```
@@ -129,6 +126,15 @@ python3 enum.py -l targets.txt -t 10
 python3 enum.py -l targets.txt --resume
 ```
 
+### Export Report
+
+```bash
+# path results/ directory and its subdir should have all the .nmap and nuclei.txt reports
+ 
+python3 nmap2html.py -i results/ -o nmap_report.html
+python3 nuclei2html.py -i results/ -o nuclei_report.html
+```
+
 ---
 
 ## 🧠 URL Filtering Logic
@@ -159,9 +165,7 @@ python3 enum.py -l targets.txt --resume
 
 ## 📸 Screenshots
 
-> Add screenshots here
-
-Example:
+> screenshots
 
 ```
 docs/
