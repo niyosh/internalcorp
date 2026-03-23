@@ -163,18 +163,6 @@ python3 nuclei2html.py -i results/ -o nuclei_report.html
 
 ---
 
-## 📸 Screenshots
-
-> screenshots
-
-```
-docs/
-   infra_report.png
-   web_report.png
-```
-
----
-
 ## ⚠️ Disclaimer
 
 This tool is intended **only for authorized internal penetration testing and security assessments.**
